@@ -21,32 +21,59 @@ let pendingAction = null;
 // ==========================================
 // BINANCE WEBSOCKET - REALTIME PRICE
 // ==========================================
-const ws = new WebSocket('wss://stream.binance.com:9443/ws/solusdt@markPrice');
+let ws;
 
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    const newPrice = parseFloat(data.p);
+function connectWebSocket() {
+    // Using Binance Futures Stream (fstream) for markPrice
+    ws = new WebSocket('wss://fstream.binance.com/ws/solusdt@markPrice');
     
-    // Update UI Colors
-    if (currentPrice > 0) {
-        if (newPrice > currentPrice) {
-            elLivePrice.className = 'live-price up';
-            elBigPrice.className = 'big-price up';
-        } else if (newPrice < currentPrice) {
-            elLivePrice.className = 'live-price down';
-            elBigPrice.className = 'big-price down';
+    ws.onopen = () => {
+        console.log("Connected to Binance WebSocket");
+    };
+
+    ws.onerror = (error) => {
+        console.error("WebSocket Error: ", error);
+        elLivePrice.innerText = "ERROR";
+    };
+
+    ws.onclose = () => {
+        console.log("WebSocket connection closed. Reconnecting in 3 seconds...");
+        setTimeout(connectWebSocket, 3000);
+    };
+
+    ws.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (!data.p) return;
+            
+            const newPrice = parseFloat(data.p);
+            
+            // Update UI Colors
+            if (currentPrice > 0) {
+                if (newPrice > currentPrice) {
+                    elLivePrice.className = 'live-price up';
+                    elBigPrice.className = 'big-price up';
+                } else if (newPrice < currentPrice) {
+                    elLivePrice.className = 'live-price down';
+                    elBigPrice.className = 'big-price down';
+                }
+            }
+            
+            currentPrice = newPrice;
+            
+            const formattedPrice = currentPrice.toFixed(4);
+            elLivePrice.innerText = formattedPrice;
+            elBigPrice.innerText = formattedPrice;
+
+            // Recalculate PnL on every tick
+            updatePositionsUI();
+        } catch (err) {
+            console.error("Error processing websocket message:", err);
         }
-    }
-    
-    currentPrice = newPrice;
-    
-    const formattedPrice = currentPrice.toFixed(4);
-    elLivePrice.innerText = formattedPrice;
-    elBigPrice.innerText = formattedPrice;
+    };
+}
 
-    // Recalculate PnL on every tick
-    updatePositionsUI();
-};
+connectWebSocket();
 
 // ==========================================
 // POSITION MANAGEMENT
