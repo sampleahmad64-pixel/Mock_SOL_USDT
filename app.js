@@ -265,22 +265,19 @@ function updateHistoryUI() {
 document.getElementById('btn-long').addEventListener('click', () => {
     const qty = parseFloat(elOrderQty.value) || 0;
     if (qty > 0) {
-        pendingAction = () => openPosition('long', qty);
-        showModal(`Are you sure you want to open a LONG position for ${qty} SOLUSDT?`);
+        openPosition('long', qty);
     }
 });
 
 document.getElementById('btn-short').addEventListener('click', () => {
     const qty = parseFloat(elOrderQty.value) || 0;
     if (qty > 0) {
-        pendingAction = () => openPosition('short', qty);
-        showModal(`Are you sure you want to open a SHORT position for ${qty} SOLUSDT?`);
+        openPosition('short', qty);
     }
 });
 
 function triggerClose(id) {
-    pendingAction = () => closePosition(id);
-    showModal(`Are you sure you want to close this position at Market Price?`);
+    closePosition(id);
 }
 
 function showModal(text) {
