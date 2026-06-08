@@ -21,58 +21,92 @@ let pendingAction = null;
 // ==========================================
 // BINANCE WEBSOCKET - REALTIME PRICE
 // ==========================================
+// ==========================================
+// BINANCE WEBSOCKET & REST FALLBACK
+// ==========================================
 let ws;
+let fallbackInterval;
+
+function handlePriceUpdate(priceStr) {
+    if (!priceStr) return;
+    const newPrice = parseFloat(priceStr);
+    if (isNaN(newPrice)) return;
+    
+    // Update UI Colors
+    if (currentPrice > 0) {
+        if (newPrice > currentPrice) {
+            elLivePrice.className = 'live-price up';
+            elBigPrice.className = 'big-price up';
+        } else if (newPrice < currentPrice) {
+            elLivePrice.className = 'live-price down';
+            elBigPrice.className = 'big-price down';
+        }
+    }
+    
+    currentPrice = newPrice;
+    
+    const formattedPrice = currentPrice.toFixed(4);
+    elLivePrice.innerText = formattedPrice;
+    elBigPrice.innerText = formattedPrice;
+
+    // Recalculate PnL on every tick
+    updatePositionsUI();
+}
+
+function fetchPriceFallback() {
+    fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=SOLUSDT')
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.price) {
+                handlePriceUpdate(data.price);
+            }
+        })
+        .catch(err => console.error("REST Fallback error:", err));
+}
 
 function connectWebSocket() {
-    // Using Binance Futures Stream (fstream) for markPrice
-    ws = new WebSocket('wss://fstream.binance.com/ws/solusdt@markPrice');
+    // Using Binance Futures Stream (fstream) for aggTrade (updates on every trade)
+    ws = new WebSocket('wss://fstream.binance.com/ws/solusdt@aggTrade');
     
     ws.onopen = () => {
         console.log("Connected to Binance WebSocket");
+        // Clear fallback polling if WS successfully connects
+        if (fallbackInterval) {
+            clearInterval(fallbackInterval);
+            fallbackInterval = null;
+        }
     };
 
     ws.onerror = (error) => {
         console.error("WebSocket Error: ", error);
-        elLivePrice.innerText = "ERROR";
     };
 
     ws.onclose = () => {
-        console.log("WebSocket connection closed. Reconnecting in 3 seconds...");
+        console.log("WebSocket connection closed. Reconnecting...");
+        // Start REST API polling while WS is down
+        if (!fallbackInterval) {
+            fetchPriceFallback(); // immediate fetch
+            fallbackInterval = setInterval(fetchPriceFallback, 2000);
+        }
         setTimeout(connectWebSocket, 3000);
     };
 
     ws.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
-            if (!data.p) return;
-            
-            const newPrice = parseFloat(data.p);
-            
-            // Update UI Colors
-            if (currentPrice > 0) {
-                if (newPrice > currentPrice) {
-                    elLivePrice.className = 'live-price up';
-                    elBigPrice.className = 'big-price up';
-                } else if (newPrice < currentPrice) {
-                    elLivePrice.className = 'live-price down';
-                    elBigPrice.className = 'big-price down';
-                }
+            // aggTrade uses 'p' for price
+            if (data.p) {
+                handlePriceUpdate(data.p);
             }
-            
-            currentPrice = newPrice;
-            
-            const formattedPrice = currentPrice.toFixed(4);
-            elLivePrice.innerText = formattedPrice;
-            elBigPrice.innerText = formattedPrice;
-
-            // Recalculate PnL on every tick
-            updatePositionsUI();
         } catch (err) {
             console.error("Error processing websocket message:", err);
         }
     };
 }
 
+// Start with REST fetch to get initial price instantly
+fetchPriceFallback();
+// Then connect WS for live stream
 connectWebSocket();
 
 // ==========================================
