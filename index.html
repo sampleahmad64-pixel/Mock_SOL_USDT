@@ -54,18 +54,21 @@
         <!-- BOTTOM PANEL: POSITIONS -->
         <div class="bottom-panel glass">
             <div class="tabs-header">
-                <div role="tab" class="tab active">
+                <div role="tab" class="tab active" id="tab-positions">
                     <span>Open Position</span>
                 </div>
                 <div role="tab" class="tab">
                     <span>Open Order</span>
+                </div>
+                <div role="tab" class="tab" id="tab-history">
+                    <span>Trade History</span>
                 </div>
             </div>
             <div class="tabs-sub-header">
                 <span id="position-tab-title">Positions(0)</span>
             </div>
             
-            <div class="positions-content">
+            <div class="positions-content" id="content-positions">
                 <table class="positions-table">
                     <thead>
                         <tr>
@@ -79,9 +82,25 @@
                     </thead>
                     <tbody id="positions-body">
                         <!-- Position Rows injected here -->
-                        <!-- Example format for XPATH matching:
-                            <tr class="position-row position"> ... </tr>
-                        -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="positions-content hidden" id="content-history">
+                <table class="positions-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Symbol</th>
+                            <th>Direction</th>
+                            <th>Closed Qty</th>
+                            <th>Entry Price</th>
+                            <th>Exit Price</th>
+                            <th>Realized PNL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        <!-- History Rows injected here -->
                     </tbody>
                 </table>
             </div>
