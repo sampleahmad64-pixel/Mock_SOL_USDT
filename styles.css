@@ -239,7 +239,10 @@ body {
     background: rgba(255,255,255,0.1);
 }
 
-/* Modal */
+.hidden {
+    display: none !important;
+}
+
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -253,6 +256,7 @@ body {
 }
 
 .modal-overlay.hidden {
+    display: flex !important; /* Override standard hidden to keep flex for animation */
     opacity: 0;
     pointer-events: none;
 }
@@ -289,3 +293,27 @@ body {
     font-weight: 600;
 }
 .ant-btn-primary:hover { background: #1c4ed8; }
+
+/* Notifications */
+.notification {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s, transform 0.3s;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    border-left: 4px solid transparent;
+}
+.notification.up {
+    border-left-color: var(--green-up);
+    color: var(--green-up);
+}
+.notification.down {
+    border-left-color: var(--red-down);
+    color: var(--red-down);
+}
